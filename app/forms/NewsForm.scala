@@ -12,8 +12,8 @@ object NewsForm {
 
   val form = Form(
     mapping(
-      "title" -> nonEmptyText,
-      "body" -> nonEmptyText
+      "title" -> text,
+      "body" -> text
     )(NewsData.apply)(NewsData.unapply)
   )
 }
