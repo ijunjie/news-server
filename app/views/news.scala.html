@@ -12,11 +12,9 @@
     }
 
     @helper.form(postUrl) {
+        @helper.CSRF.formField
         @helper.inputText(form("title"))
-        @helper.input(form("body")) { (id, name, value, args) =>
-          <input type="text" name="@name" id="@id" @toHtmlArgs(args)>
-        }
-        @* @helper.inputText(form("body")) *@
+         @helper.inputText(form("body"))
 
         <button>create</button>
     }

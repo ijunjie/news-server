@@ -22,7 +22,7 @@ object News {
 
   def validateUpperCase(str: String, fieldName: String): ValidatedNel[ValidationError, String] =
     condNel(str.equals(str.toUpperCase()), str, ValidationError(fieldName,
-      s"$fieldName isn't in lower case"))
+      s"$fieldName isn't in upper case"))
 
 
 

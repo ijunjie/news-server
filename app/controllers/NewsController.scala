@@ -1,5 +1,8 @@
 package controllers
 
+import cats.data.NonEmptyList
+import cats.data.Validated.{Invalid, Valid}
+import models.{ValidationError, News}
 import play.api.mvc.{AbstractController, ControllerComponents}
 
 /**
@@ -17,6 +20,17 @@ class NewsController(cc: ControllerComponents) extends AbstractController(cc) wi
   }
 
   def newsPost = Action { implicit request =>
-    Redirect(routes.HomeController.index())
+
+    val resultForm = form.bindFromRequest
+
+    resultForm.fold(
+      formWithErrors => BadRequest(views.html.news(formWithErrors, postUrl)),
+      newsData => News.create(newsData.title, newsData.body) match {
+        case Valid(_) => Redirect(routes.HomeController.index())
+        case Invalid(errors: NonEmptyList[ValidationError]) =>
+          val errorForm = errors.foldLeft(resultForm)((foldForm, error) => foldForm.withError(error.field, error.errorMessage))
+          BadRequest(views.html.news(errorForm, postUrl))
+      }
+    )
   }
 }
