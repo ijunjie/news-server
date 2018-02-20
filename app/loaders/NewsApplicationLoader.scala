@@ -4,15 +4,12 @@ import java.time.Clock
 
 import controllers._
 import play.api.ApplicationLoader.Context
-import play.api.i18n.I18nComponents
-import play.api.mvc.{DefaultMessagesControllerComponents, MessagesControllerComponents}
 import play.api.{Application, ApplicationLoader, BuiltInComponents, BuiltInComponentsFromContext}
 import play.filters.HttpFiltersComponents
-import reactivemongo.api.{MongoConnection, MongoDriver}
 import play.modules.reactivemongo._
-import repos.{MongoCategoryRepo, NewsMongoRepo}
+import repos.NewsMongoRepo
 import router.Routes
-import services.{ApplicationTimer, AtomicCounter}
+import services.ApplicationTimer
 
 /**
   * @author Denis Pakhomov.
@@ -29,18 +26,13 @@ class NewsApplicationLoader extends ApplicationLoader {
     with ReactiveMongoClient
     with MongoRepos {
 
-    lazy val apiController = new ApiController(controllerComponents)
     lazy val homeController = new HomeController(controllerComponents)
-    lazy val asyncController = new AsyncController(controllerComponents, actorSystem)
 
     lazy val applicationTimer = new ApplicationTimer(Clock.systemDefaultZone(), applicationLifecycle)
-    lazy val counter = new AtomicCounter()
-    lazy val countController = new CountController(controllerComponents, counter)
-    lazy val categoryController = new CategoryController(controllerComponents, categoryRepo)
     lazy val newsController = new NewsController(newsRepo, controllerComponents)
 
-    lazy val router = new Routes(httpErrorHandler, homeController, countController, asyncController, apiController,
-      categoryController, newsController, assets)
+    lazy val router = new Routes(httpErrorHandler, homeController,
+      newsController, assets)
   }
 }
 
@@ -49,6 +41,5 @@ trait ReactiveMongoClient { self: BuiltInComponents =>
 }
 
 trait MongoRepos { self: ReactiveMongoClient =>
-  lazy val categoryRepo: MongoCategoryRepo = new MongoCategoryRepo { val mongoApi = self.mongoApi}
   lazy val newsRepo: NewsMongoRepo = new NewsMongoRepo { val mongoApi = self.mongoApi }
 }
