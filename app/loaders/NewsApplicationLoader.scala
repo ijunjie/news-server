@@ -10,7 +10,7 @@ import play.api.{Application, ApplicationLoader, BuiltInComponents, BuiltInCompo
 import play.filters.HttpFiltersComponents
 import reactivemongo.api.{MongoConnection, MongoDriver}
 import play.modules.reactivemongo._
-import repos.MongoCategoryRepo
+import repos.{MongoCategoryRepo, NewsMongoRepo}
 import router.Routes
 import services.{ApplicationTimer, AtomicCounter}
 
@@ -37,7 +37,7 @@ class NewsApplicationLoader extends ApplicationLoader {
     lazy val counter = new AtomicCounter()
     lazy val countController = new CountController(controllerComponents, counter)
     lazy val categoryController = new CategoryController(controllerComponents, categoryRepo)
-    lazy val newsController = new NewsController(controllerComponents)
+    lazy val newsController = new NewsController(newsRepo, controllerComponents)
 
     lazy val router = new Routes(httpErrorHandler, homeController, countController, asyncController, apiController,
       categoryController, newsController, assets)
@@ -50,4 +50,5 @@ trait ReactiveMongoClient { self: BuiltInComponents =>
 
 trait MongoRepos { self: ReactiveMongoClient =>
   lazy val categoryRepo: MongoCategoryRepo = new MongoCategoryRepo { val mongoApi = self.mongoApi}
+  lazy val newsRepo: NewsMongoRepo = new NewsMongoRepo { val mongoApi = self.mongoApi }
 }
