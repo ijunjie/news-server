@@ -2,9 +2,10 @@ package controllers
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
-import models.{News, ValidationError}
+import models.News
 import play.api.mvc.{AbstractController, ControllerComponents}
 import repos.NewsMongoRepo
+import validation.ValidationError
 
 import scala.concurrent.Future
 
