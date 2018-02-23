@@ -13,8 +13,9 @@
 
     @helper.form(postUrl) {
         @helper.CSRF.formField
+        @helper.inputText(form("id"))
         @helper.inputText(form("title"))
-         @helper.inputText(form("body"))
+        @helper.inputText(form("body"))
 
         <button>create</button>
     }

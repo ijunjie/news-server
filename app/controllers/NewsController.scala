@@ -32,7 +32,7 @@ class NewsController(newsRepo: NewsMongoRepo, cc: ControllerComponents) extends 
 
     resultForm.fold(
       formWithErrors => Future.successful(BadRequest(views.html.news(formWithErrors, postUrl))),
-      newsData => News.create(newsData.title, newsData.body) match {
+      newsData => News.create(newsData.id, newsData.title, newsData.body) match {
         case Valid(news: News) => newsRepo.createNews(news).map(_ => Redirect(routes.HomeController.index()))
         case Invalid(errors: NonEmptyList[ValidationError]) =>
           val errorForm = errors.foldLeft(resultForm)((foldForm, error) => foldForm.withError(error.field, error.errorMessage))
