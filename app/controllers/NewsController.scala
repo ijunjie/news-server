@@ -2,21 +2,19 @@ package controllers
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
-import models.News
 import play.api.mvc.{AbstractController, ControllerComponents}
-import repos.NewsMongoRepo
+import services.NewsService
 import validation.ValidationError
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * @author Denis Pakhomov.
   * @version 1.0
   */
-class NewsController(newsRepo: NewsMongoRepo, cc: ControllerComponents) extends AbstractController(cc)
-  with play.api.i18n.I18nSupport {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
+class NewsController(newsService: NewsService, cc: ControllerComponents)(implicit ec: ExecutionContext)
+  extends AbstractController(cc)
+    with play.api.i18n.I18nSupport {
 
   import forms.NewsForm._
 
@@ -32,11 +30,12 @@ class NewsController(newsRepo: NewsMongoRepo, cc: ControllerComponents) extends 
 
     resultForm.fold(
       formWithErrors => Future.successful(BadRequest(views.html.news(formWithErrors, postUrl))),
-      newsData => News.create(newsData.id, newsData.title, newsData.body) match {
-        case Valid(news: News) => newsRepo.createNews(news).map(_ => Redirect(routes.HomeController.index()))
+
+      newsData => newsService.create(newsData.id, newsData.title, newsData.body).map {
+        case Valid(_) => Redirect(routes.HomeController.index())
         case Invalid(errors: NonEmptyList[ValidationError]) =>
           val errorForm = errors.foldLeft(resultForm)((foldForm, error) => foldForm.withError(error.field, error.errorMessage))
-          Future.successful(BadRequest(views.html.news(errorForm, postUrl)))
+          BadRequest(views.html.news(errorForm, postUrl))
       }
     )
   }

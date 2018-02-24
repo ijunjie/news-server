@@ -15,7 +15,8 @@ object ValidationConstraints {
     condNel(!field.value.isEmpty, field, ValidationError(field.name, s"${field.name} is empty"))
 
   def upperCased(field: Field[String]): ValidationResult[Field[String]] =
-    condNel(!field.value.isEmpty, field, ValidationError(field.name, s"${field.name} isn't upper cased"))
+    condNel(field.value.equals(field.value.toUpperCase), field,
+      ValidationError(field.name, s"${field.name} isn't upper cased"))
 
   def regexp(field: Field[String], regex: String) =
     condNel(regex.r.findAllIn(field.value).nonEmpty, field,
