@@ -8,13 +8,13 @@ import play.api.data.Forms._
   * @version 1.0
   */
 object NewsForm {
-  case class NewsData(id: String, title: String, body: String)
+  case class NewsData(id: Option[String], title: Option[String], body: Option[String])
 
   val form = Form(
     mapping(
-      "id" -> text,
-      "title" -> text,
-      "body" -> text
+      "id" -> optional(text),
+      "title" -> optional(text),
+      "body" -> optional(text)
     )(NewsData.apply)(NewsData.unapply)
   )
 }
