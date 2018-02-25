@@ -2,6 +2,7 @@ package controllers
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
+import models.News
 import play.api.mvc.{AbstractController, ControllerComponents}
 import services.NewsService
 import validation.ValidationError
@@ -19,6 +20,14 @@ class NewsController(newsService: NewsService, cc: ControllerComponents)(implici
   import forms.NewsForm._
 
   private val postUrl = routes.NewsController.newsPost()
+
+  def newsUpdate(id: String) = Action.async { implicit request =>
+    newsService.findById(id).map {
+      case Some(Valid(news: News)) => Ok(views.html.news(form.fill(NewsData(Some(news._id), Some(news.title), Some(news.body))), postUrl))
+      case Some(Invalid(_)) => InternalServerError(views.html.error("error deserialize news"))
+      case None => NotFound(views.html.error(s"news with id $id is not found"))
+    }
+  }
 
   def news = Action { implicit request =>
     Ok(views.html.news(form, postUrl))

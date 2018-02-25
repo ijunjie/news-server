@@ -18,9 +18,11 @@ trait NewsService {
   def repo: NewsRepo
 
   def create(id: Option[String], title: Option[String], body: Option[String]): Future[ValidationResult[String]] = {
-    News(id, title, body) match {
+    News.create(id, title, body) match {
       case Valid(news: News) => repo.create(news).map(_ => Valid(news._id))
       case Invalid(errors: NonEmptyList[ValidationError]) => Future.successful(Invalid(errors))
     }
   }
+
+  def findById(id: String): Future[Option[ValidationResult[News]]] = repo.findById(id)
 }

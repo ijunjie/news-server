@@ -21,6 +21,9 @@ object ValidationConstraints {
   def regexp(field: Field[String], regex: String) =
     condNel(regex.r.findAllIn(field.value).nonEmpty, field,
       ValidationError(field.name, s"${field.name} doesn't match pattern"))
+
+  def nonNegative(field: Field[Int]): ValidationResult[Field[Int]] =
+    condNel(field.value >= 0, field, ValidationError(field.name, s"${field.value} should be greater or equal zero"))
 }
 
 case class ValidationError(field: String, errorMessage: String)

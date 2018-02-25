@@ -12,10 +12,11 @@ trait BSONReaders {
   implicit object NewsReader extends BSONDocumentReader[ValidationResult[News]] {
     override def read(bson: BSONDocument): ValidationResult[News] = {
       val id = bson.getAs[String]("_id")
+      val version = bson.getAs[Int]("version")
       val title = bson.getAs[String]("title")
       val body = bson.getAs[String]("body")
 
-      News(id, title, body)
+      News(id, version, title, body)
     }
   }
 }

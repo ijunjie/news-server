@@ -9,7 +9,7 @@ import validation.{Field, ValidationError}
 /**
   * @author Denis Pakhomov.
   */
-case class News private(_id: String, title: String, body: String)
+case class News private(_id: String, version: Int, title: String, body: String)
 
 object News {
 
@@ -17,6 +17,11 @@ object News {
     fromOption(id, NEL.of(ValidationError("id", "id is missing")))
         .map(value => Field(value, "id"))
       .andThen(regexp(_, raw"^[a-z0-9_]+$$"))
+
+  def versionValidated(version: Option[Int]): ValidationResult[Field[Int]] =
+    fromOption(version, NEL.of(ValidationError("version", "version is missing")))
+      .map(value => Field(value, "version"))
+    .andThen(nonNegative)
 
   def titleValidated(title: Option[String]): ValidationResult[Field[String]] =
     fromOption(title, NEL.of(ValidationError("title", "title is missing")))
@@ -29,9 +34,13 @@ object News {
         .map(value => Field(value, "body"))
       .andThen(nonEmpty)
 
-  def apply(id: Option[String], title: Option[String], body: Option[String]): ValidationResult[News] = {
-    (idValidated(id), titleValidated(title), bodyValidated(body)).mapN { case (vId, vTitle, vBody) =>
-      new News(vId.value, vTitle.value, vBody.value)
+  def create(id: Option[String], title: Option[String], body: Option[String]): ValidationResult[News] =
+    apply(id, Some(1), title, body)
+
+  def apply(id: Option[String], version: Option[Int], title: Option[String], body: Option[String]): ValidationResult[News] = {
+    (idValidated(id), versionValidated(version), titleValidated(title), bodyValidated(body)).mapN {
+      case (idField, versionField, titleField, bodyField) =>
+        new News(idField.value, versionField.value, titleField.value, bodyField.value)
     }
   }
 }
