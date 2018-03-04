@@ -1,6 +1,6 @@
 @import forms.NewsForm.NewsData
 
-@(form: Form[NewsData], postUrl: Call)(implicit request: RequestHeader, messagesProvider: MessagesProvider)
+@(form: Form[NewsData], postUrl: Call, update: Boolean)(implicit request: RequestHeader, messagesProvider: MessagesProvider)
 
 @main("News") {
     <h1>News</h1>
@@ -13,10 +13,16 @@
 
     @helper.form(postUrl) {
         @helper.CSRF.formField
-        @helper.inputText(form("id"))
+
+        @if(update) {
+            @helper.inputText(form("id"), 'readonly -> "readonly")
+        } else {
+            @helper.inputText(form("id"))
+        }
         @helper.inputText(form("title"))
         @helper.inputText(form("body"))
 
-        <button>create</button>
+
+        <button>@(if (update) "Update" else "Create")</button>
     }
 }

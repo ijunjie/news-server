@@ -11,7 +11,9 @@ import scala.concurrent.Future
   */
 trait NewsRepo {
 
-  def create(news: News): Future[Unit]
+  def create(news: News): Future[String]
+
+  def update(news: News): Future[String]
 
   def findById(id: String): Future[Option[ValidationResult[News]]]
 }

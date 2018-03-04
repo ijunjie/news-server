@@ -9,7 +9,7 @@ import cats.data.ValidatedNel
   */
 object ValidationConstraints {
 
-  type ValidationResult[R] = ValidatedNel[ValidationError, R]
+  type ValidationResult[R] = ValidatedNel[ServerError, R]
 
   def nonEmpty(field: Field[String]): ValidationResult[Field[String]] =
     condNel(!field.value.isEmpty, field, ValidationError(field.name, s"${field.name} is empty"))
@@ -26,5 +26,8 @@ object ValidationConstraints {
     condNel(field.value >= 0, field, ValidationError(field.name, s"${field.value} should be greater or equal zero"))
 }
 
-case class ValidationError(field: String, errorMessage: String)
+sealed trait ServerError
+case class BusinessLogicError(errorMessage: String) extends ServerError
+case class ValidationError(field: String, errorMessage: String) extends ServerError
+
 case class Field[T](value: T, name: String)

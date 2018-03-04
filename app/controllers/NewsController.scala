@@ -3,9 +3,10 @@ package controllers
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import models.News
+import play.api.data.Form
 import play.api.mvc.{AbstractController, ControllerComponents}
 import services.NewsService
-import validation.ValidationError
+import validation.{BusinessLogicError, ServerError, ValidationError}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -19,33 +20,58 @@ class NewsController(newsService: NewsService, cc: ControllerComponents)(implici
 
   import forms.NewsForm._
 
-  private val postUrl = routes.NewsController.newsPost()
+  private val postUrl = routes.NewsController.addSave()
 
-  def newsUpdate(id: String) = Action.async { implicit request =>
+  private val updateUrl = routes.NewsController.editSave()
+
+  def addForm = Action { implicit request =>
+    Ok(views.html.news(form, postUrl, update = false))
+  }
+
+  def addSave = Action.async { implicit request =>
+
+    val resultForm = form.bindFromRequest
+
+    resultForm.fold(
+      formWithErrors => Future.successful(BadRequest(views.html.news(formWithErrors, postUrl, update = false))),
+
+      newsData => newsService.create(newsData.id, newsData.title, newsData.body).map {
+        case Valid(_) => Redirect(routes.HomeController.index())
+        case Invalid(errors: NonEmptyList[ServerError]) =>
+          BadRequest(views.html.news(formWithErrors(resultForm, errors.toList), postUrl, update = false))
+      }
+    )
+  }
+
+  def editForm(id: String) = Action.async { implicit request =>
     newsService.findById(id).map {
-      case Some(Valid(news: News)) => Ok(views.html.news(form.fill(NewsData(Some(news._id), Some(news.title), Some(news.body))), postUrl))
+      case Some(Valid(news: News)) => Ok(views.html.news(
+        form.fill(NewsData(Some(news._id), Some(news.title), Some(news.body))), updateUrl, update = true))
       case Some(Invalid(_)) => InternalServerError(views.html.error("error deserialize news"))
       case None => NotFound(views.html.error(s"news with id $id is not found"))
     }
   }
 
-  def news = Action { implicit request =>
-    Ok(views.html.news(form, postUrl))
-  }
+  def editSave() = Action.async { implicit request =>
 
-  def newsPost = Action.async { implicit request =>
+    val updateForm = form.bindFromRequest
 
-    val resultForm = form.bindFromRequest
+    updateForm.fold(
 
-    resultForm.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.news(formWithErrors, postUrl))),
+      formWithErrors => Future.successful(BadRequest(views.html.news(formWithErrors, updateUrl, update = true))),
 
-      newsData => newsService.create(newsData.id, newsData.title, newsData.body).map {
+      newsData => newsService.update(newsData.id, newsData.title, newsData.body).map {
         case Valid(_) => Redirect(routes.HomeController.index())
-        case Invalid(errors: NonEmptyList[ValidationError]) =>
-          val errorForm = errors.foldLeft(resultForm)((foldForm, error) => foldForm.withError(error.field, error.errorMessage))
-          BadRequest(views.html.news(errorForm, postUrl))
+        case Invalid(errors: NonEmptyList[ServerError]) =>
+          BadRequest(views.html.news(formWithErrors(updateForm, errors.toList), updateUrl, update = true))
       }
+
     )
   }
+
+  protected def formWithErrors[T](form: Form[T], errors: Iterable[ServerError]): Form[T] =
+    errors.foldLeft(form)((foldForm, error) => error match {
+      case BusinessLogicError(message) => foldForm.withGlobalError(message)
+      case ValidationError(field, message) => foldForm.withError(field, message)
+    })
 }
