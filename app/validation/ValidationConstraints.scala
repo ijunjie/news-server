@@ -26,8 +26,9 @@ object ValidationConstraints {
     condNel(field.value >= 0, field, ValidationError(field.name, s"${field.value} should be greater or equal zero"))
 }
 
-sealed trait ServerError
-case class BusinessLogicError(errorMessage: String) extends ServerError
-case class ValidationError(field: String, errorMessage: String) extends ServerError
+sealed trait ServerError {val message: String}
+case class BusinessLogicError(message: String) extends ServerError
+case class EntityNotFoundError(message: String) extends ServerError
+case class ValidationError(field: String, message: String) extends ServerError
 
 case class Field[T](value: T, name: String)

@@ -71,7 +71,7 @@ class NewsController(newsService: NewsService, cc: ControllerComponents)(implici
 
   protected def formWithErrors[T](form: Form[T], errors: Iterable[ServerError]): Form[T] =
     errors.foldLeft(form)((foldForm, error) => error match {
-      case BusinessLogicError(message) => foldForm.withGlobalError(message)
       case ValidationError(field, message) => foldForm.withError(field, message)
+      case error: ServerError => foldForm.withGlobalError(error.message)
     })
 }

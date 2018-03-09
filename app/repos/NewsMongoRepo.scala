@@ -4,8 +4,9 @@ import models.News
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.collections.bson.BSONCollection
-import reactivemongo.api.commands.WriteResult
+import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
 import reactivemongo.bson.{BSONDocument, BSONDocumentWriter, Macros}
+import validation.{BusinessLogicError, EntityNotFoundError, ServerError}
 import validation.ValidationConstraints.ValidationResult
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,14 +30,19 @@ trait NewsMongoRepo extends NewsRepo with BSONReaders{
     newsCollection.flatMap(_.insert(news)).map(_ => news._id)
   }
 
-  override def update(news: News): Future[String] = {
+  override def update(news: News): Future[Either[ServerError, String]] = {
     val selector = BSONDocument("_id" -> news._id, "version" -> news.version)
     val setModifier = BSONDocument(
       "$set" -> BSONDocument("title" -> news.title, "body" -> news.body),
       "$inc" -> BSONDocument("version" -> 1)
     )
 
-    newsCollection.flatMap(_.update(selector, setModifier)).map(_ => news._id)
+    newsCollection.flatMap(_.update(selector, setModifier)).map {
+      case result if result.ok && result.nModified == 1 => Right(news._id)
+      case result if result.ok && result.nModified == 0 =>
+        Left(EntityNotFoundError(s"news with id=${news._id} and version=${news.version} doesn't exist"))
+      case result if result.errmsg.isDefined => Left(BusinessLogicError(result.errmsg.get))
+    }
   }
   override def findById(id: String): Future[Option[ValidationResult[News]]] = {
     newsCollection.flatMap(_.find(BSONDocument("_id" -> id)).one[ValidationResult[News]])

@@ -1,6 +1,7 @@
 package repos
 
 import models.News
+import validation.ServerError
 import validation.ValidationConstraints.ValidationResult
 
 import scala.concurrent.Future
@@ -13,7 +14,7 @@ trait NewsRepo {
 
   def create(news: News): Future[String]
 
-  def update(news: News): Future[String]
+  def update(news: News): Future[Either[ServerError, String]]
 
   def findById(id: String): Future[Option[ValidationResult[News]]]
 }

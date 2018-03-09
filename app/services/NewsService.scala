@@ -4,8 +4,8 @@ import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import models.News
 import repos.NewsRepo
-import validation.{BusinessLogicError, ServerError}
 import validation.ValidationConstraints.ValidationResult
+import validation.{BusinessLogicError, EntityNotFoundError, ServerError}
 
 import scala.concurrent.Future.successful
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +30,11 @@ trait NewsService {
       case Some(idVal) => findById(idVal).flatMap {
         case Some(Invalid(_)) => successful(Invalid(NonEmptyList.one(BusinessLogicError(s"news with id $id is corrupted"))))
         case Some(Valid(news)) => News(id, Some(news.version), title, body) match {
-          case Valid(next: News) => repo.update(next).map(Valid(_))
+          case Valid(next: News) => repo.update(next).flatMap {
+            case Right(newsId: String) => Future.successful(Valid(newsId))
+            case Left(_:EntityNotFoundError) => update(id, title, body)
+            case Left(error: ServerError) => Future.successful(Invalid(NonEmptyList.one(error)))
+          }
           case p @ Invalid(_) => successful(p)
         }
         case None => successful(Invalid(NonEmptyList.one(BusinessLogicError("news doesn't exist"))))
