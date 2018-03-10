@@ -15,6 +15,8 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait NewsService {
 
+  protected val tryLimit: Int = 5
+
   implicit def context: ExecutionContext
   def repo: NewsRepo
 
@@ -25,14 +27,19 @@ trait NewsService {
     }
   }
 
-  def update(id: Option[String], title: Option[String], body: Option[String]): Future[ValidationResult[String]] = {
+  def update(id: Option[String], title: Option[String], body: Option[String]): Future[ValidationResult[String]] =
+    update(id, title, body, tryCount = 0)
+
+  def update(id: Option[String], title: Option[String], body: Option[String], tryCount: Int): Future[ValidationResult[String]] = {
     id match {
       case Some(idVal) => findById(idVal).flatMap {
         case Some(Invalid(_)) => successful(Invalid(NonEmptyList.one(BusinessLogicError(s"news with id $id is corrupted"))))
         case Some(Valid(news)) => News(id, Some(news.version), title, body) match {
           case Valid(next: News) => repo.update(next).flatMap {
             case Right(newsId: String) => Future.successful(Valid(newsId))
-            case Left(_:EntityNotFoundError) => update(id, title, body)
+            case Left(error: EntityNotFoundError) =>
+              if (tryCount < tryLimit) update(id, title, body, tryCount + 1)
+              else Future.successful(Invalid(NonEmptyList.one(error)))
             case Left(error: ServerError) => Future.successful(Invalid(NonEmptyList.one(error)))
           }
           case p @ Invalid(_) => successful(p)

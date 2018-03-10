@@ -4,10 +4,9 @@ import models.News
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.collections.bson.BSONCollection
-import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
 import reactivemongo.bson.{BSONDocument, BSONDocumentWriter, Macros}
-import validation.{BusinessLogicError, EntityNotFoundError, ServerError}
 import validation.ValidationConstraints.ValidationResult
+import validation.{BusinessLogicError, EntityNotFoundError, ServerError}
 
 import scala.concurrent.{ExecutionContext, Future}
 
