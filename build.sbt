@@ -16,7 +16,8 @@ libraryDependencies ++= Seq( jdbc , ehcache , ws , specs2 % Test ,
   "org.reactivemongo" %% "play2-reactivemongo" % "0.12.4",
   "org.typelevel" %% "cats-core" % catsVersion,
   "org.typelevel" %% "cats-kernel" % catsVersion,
-  "org.typelevel" %% "cats-macros" % catsVersion)
+  "org.typelevel" %% "cats-macros" % catsVersion,
+  "org.webjars" % "bootstrap" % "4.0.0-1")
 
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
 

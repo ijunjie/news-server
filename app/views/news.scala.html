@@ -2,8 +2,20 @@
 
 @(form: Form[NewsData], postUrl: Call, update: Boolean)(implicit request: RequestHeader, messagesProvider: MessagesProvider)
 
-@main("News") {
-    <h1>News</h1>
+@errorFeedback(field: Field) = {
+    @if(field.hasErrors) {
+        <div class="invalid-feedback">
+            @field.errors.flatMap(_.messages).mkString(", ")
+        </div>
+    }
+}
+
+@validationClass(field: Field) = @{
+    if (field.hasErrors) Some("is-invalid") else None
+}
+
+@main {
+    <h2>News</h2>
 
     @if(form.hasGlobalErrors) {
         @form.globalErrors.map { error: FormError =>
@@ -11,18 +23,32 @@
         }
     }
 
-    @helper.form(postUrl) {
+    <form method="post" action="@postUrl">
+
         @helper.CSRF.formField
 
-        @if(update) {
-            @helper.inputText(form("id"), 'readonly -> "readonly")
-        } else {
-            @helper.inputText(form("id"))
-        }
-        @helper.inputText(form("title"))
-        @helper.inputText(form("body"))
+        <div class="form-group row">
+            <label for="id" class="col-sm-2 col-form-label">Id</label>
+            <div class="col-sm-10">
+                <input type="text" class='form-control @validationClass(form("id"))' id="id" name="id" value='@form("id").value'>
+                @errorFeedback(form("id"))
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="title" class="col-sm-2 col-form-label">Title</label>
+            <div class="col-sm-10">
+                <input type="text" class='form-control @validationClass(form("title"))' id="title" name="title" value='@form("title").value'>
+                @errorFeedback(form("title"))
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="body" class="col-sm-2 col-form-label">Body</label>
+            <div class="col-sm-10">
+                <input type="text" class='form-control @validationClass(form("body"))' id="body" name="body" value='@form("body").value'>
+                @errorFeedback(form("body"))
+            </div>
+        </div>
 
-
-        <button>@(if (update) "Update" else "Create")</button>
-    }
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
 }
