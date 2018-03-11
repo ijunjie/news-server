@@ -1,5 +1,6 @@
 package repos
 
+import dto.NewsListDto
 import models.News
 import validation.ServerError
 import validation.ValidationConstraints.ValidationResult
@@ -17,4 +18,6 @@ trait NewsRepo {
   def update(news: News): Future[Either[ServerError, String]]
 
   def findById(id: String): Future[Option[ValidationResult[News]]]
+
+  def newsList(limit: Int = -1): Future[Vector[NewsListDto]]
 }

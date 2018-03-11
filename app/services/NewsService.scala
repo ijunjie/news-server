@@ -2,6 +2,7 @@ package services
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
+import dto.NewsListDto
 import models.News
 import repos.NewsRepo
 import validation.ValidationConstraints.ValidationResult
@@ -51,4 +52,6 @@ trait NewsService {
   }
 
   def findById(id: String): Future[Option[ValidationResult[News]]] = repo.findById(id)
+
+  def newsList(limit: Int = -1): Future[Vector[NewsListDto]] = repo.newsList(limit)
 }

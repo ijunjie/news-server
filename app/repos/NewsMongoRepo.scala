@@ -1,10 +1,11 @@
 package repos
 
+import dto.NewsListDto
 import models.News
 import play.modules.reactivemongo.ReactiveMongoApi
-import reactivemongo.api.DefaultDB
+import reactivemongo.api.{Cursor, DefaultDB}
 import reactivemongo.api.collections.bson.BSONCollection
-import reactivemongo.bson.{BSONDocument, BSONDocumentWriter, Macros}
+import reactivemongo.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, Macros}
 import validation.ValidationConstraints.ValidationResult
 import validation.{BusinessLogicError, EntityNotFoundError, ServerError}
 
@@ -24,6 +25,7 @@ trait NewsMongoRepo extends NewsRepo with BSONReaders{
   def newsCollection: Future[BSONCollection] = db.map(_.collection("news"))
 
   implicit def newsWriter: BSONDocumentWriter[News] = Macros.writer[News]
+  implicit def newsListDtoReader: BSONDocumentReader[NewsListDto] = Macros.reader[NewsListDto]
 
   override def create(news: News): Future[String] = {
     newsCollection.flatMap(_.insert(news)).map(_ => news._id)
@@ -46,4 +48,8 @@ trait NewsMongoRepo extends NewsRepo with BSONReaders{
   override def findById(id: String): Future[Option[ValidationResult[News]]] = {
     newsCollection.flatMap(_.find(BSONDocument("_id" -> id)).one[ValidationResult[News]])
   }
+
+  override def newsList(limit: Int = -1): Future[Vector[NewsListDto]] =
+    newsCollection.flatMap(_.find(BSONDocument.empty, BSONDocument("_id" -> 1, "title" -> 1))
+      .cursor[NewsListDto]().collect[Vector](limit, Cursor.FailOnError[Vector[NewsListDto]]()))
 }

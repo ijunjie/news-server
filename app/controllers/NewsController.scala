@@ -24,6 +24,10 @@ class NewsController(newsService: NewsService, cc: ControllerComponents)(implici
 
   private val updateUrl = routes.NewsController.editSave()
 
+  def index = Action.async { implicit request =>
+    newsService.newsList().map(newsList => Ok(views.html.newsindex(newsList)))
+  }
+
   def addForm = Action { implicit request =>
     Ok(views.html.news(form, postUrl, update = false))
   }

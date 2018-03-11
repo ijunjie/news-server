@@ -1,0 +1,28 @@
+@import dto.NewsListDto
+
+@(newsList: Vector[NewsListDto])(implicit request: RequestHeader, messagesProvider: MessagesProvider)
+
+@main {
+    <h2>News</h2>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Id</th>
+                <th scope="col">Title</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for(news <- newsList.zipWithIndex) {
+                <tr>
+                    <th scope="row">@{news._2 + 1}</th>
+                    <td>@news._1._id</td>
+                    <td>@news._1.title</td>
+                    <td><a href='@routes.NewsController.editForm(news._1._id)' class="btn btn-primary btn-sm">Edit</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
